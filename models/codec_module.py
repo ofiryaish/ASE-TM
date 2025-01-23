@@ -5,32 +5,35 @@ import torch.nn as nn
 from einops import rearrange
 from .lsigmoid import LearnableSigmoid2D
 
+
 def get_padding(kernel_size, dilation=1):
     """
     Calculate the padding size for a convolutional layer.
-    
+
     Args:
     - kernel_size (int): Size of the convolutional kernel.
     - dilation (int, optional): Dilation rate of the convolution. Defaults to 1.
-    
+
     Returns:
     - int: Calculated padding size.
     """
     return int((kernel_size * dilation - dilation) / 2)
 
+
 def get_padding_2d(kernel_size, dilation=(1, 1)):
     """
     Calculate the padding size for a 2D convolutional layer.
-    
+
     Args:
     - kernel_size (tuple): Size of the convolutional kernel (height, width).
     - dilation (tuple, optional): Dilation rate of the convolution (height, width). Defaults to (1, 1).
-    
+
     Returns:
     - tuple: Calculated padding size (height, width).
     """
-    return (int((kernel_size[0] * dilation[0] - dilation[0]) / 2), 
+    return (int((kernel_size[0] * dilation[0] - dilation[0]) / 2),
             int((kernel_size[1] * dilation[1] - dilation[1]) / 2))
+
 
 class DenseBlock(nn.Module):
     """
@@ -46,7 +49,7 @@ class DenseBlock(nn.Module):
         for i in range(depth):
             dil = 2 ** i
             dense_conv = nn.Sequential(
-                nn.Conv2d(self.hid_feature * (i + 1), self.hid_feature, kernel_size, 
+                nn.Conv2d(self.hid_feature * (i + 1), self.hid_feature, kernel_size,
                           dilation=(dil, 1), padding=get_padding_2d(kernel_size, (dil, 1))),
                 nn.InstanceNorm2d(self.hid_feature, affine=True),
                 nn.PReLU(self.hid_feature)
@@ -56,10 +59,10 @@ class DenseBlock(nn.Module):
     def forward(self, x):
         """
         Forward pass for the DenseBlock module.
-        
+
         Args:
         - x (torch.Tensor): Input tensor.
-        
+
         Returns:
         - torch.Tensor: Output tensor after processing through the dense block.
         """
@@ -68,6 +71,7 @@ class DenseBlock(nn.Module):
             x = self.dense_block[i](skip)
             skip = torch.cat([x, skip], dim=1)
         return x
+
 
 class DenseEncoder(nn.Module):
     """
@@ -96,10 +100,10 @@ class DenseEncoder(nn.Module):
     def forward(self, x):
         """
         Forward pass for the DenseEncoder module.
-        
+
         Args:
         - x (torch.Tensor): Input tensor.
-        
+
         Returns:
         - torch.Tensor: Encoded tensor.
         """
@@ -107,6 +111,7 @@ class DenseEncoder(nn.Module):
         x = self.dense_block(x)   # [batch, hid_feature, time, freq]
         x = self.dense_conv_2(x)  # [batch, hid_feature, time, freq//2]
         return x
+
 
 class MagDecoder(nn.Module):
     """
@@ -132,10 +137,10 @@ class MagDecoder(nn.Module):
     def forward(self, x):
         """
         Forward pass for the MagDecoder module.
-        
+
         Args:
         - x (torch.Tensor): Input tensor.
-        
+
         Returns:
         - torch.Tensor: Decoded tensor with magnitude information.
         """
@@ -145,6 +150,7 @@ class MagDecoder(nn.Module):
         x = self.lsigmoid(x)
         x = rearrange(x, 'b f t -> b t f').unsqueeze(1)
         return x
+
 
 class PhaseDecoder(nn.Module):
     """
@@ -168,10 +174,10 @@ class PhaseDecoder(nn.Module):
     def forward(self, x):
         """
         Forward pass for the PhaseDecoder module.
-        
+
         Args:
         - x (torch.Tensor): Input tensor.
-        
+
         Returns:
         - torch.Tensor: Decoded tensor with phase information.
         """

@@ -7,10 +7,11 @@ from pesq import pesq
 from joblib import Parallel, delayed
 from models.lsigmoid import LearnableSigmoid1D
 
+
 def pesq_loss(clean, noisy, sr=16000):
     try:
         pesq_score = pesq(sr, clean, noisy, 'wb')
-    except:
+    except Exception:
         # error can happen due to silent period
         pesq_score = -1
     return pesq_score
@@ -30,16 +31,16 @@ class MetricDiscriminator(nn.Module):
     def __init__(self, dim=16, in_channel=2):
         super(MetricDiscriminator, self).__init__()
         self.layers = nn.Sequential(
-            nn.utils.spectral_norm(nn.Conv2d(in_channel, dim, (4,4), (2,2), (1,1), bias=False)),
+            nn.utils.spectral_norm(nn.Conv2d(in_channel, dim, (4, 4), (2, 2), (1, 1), bias=False)),
             nn.InstanceNorm2d(dim, affine=True),
             nn.PReLU(dim),
-            nn.utils.spectral_norm(nn.Conv2d(dim, dim*2, (4,4), (2,2), (1,1), bias=False)),
+            nn.utils.spectral_norm(nn.Conv2d(dim, dim*2, (4, 4), (2, 2), (1, 1), bias=False)),
             nn.InstanceNorm2d(dim*2, affine=True),
             nn.PReLU(dim*2),
-            nn.utils.spectral_norm(nn.Conv2d(dim*2, dim*4, (4,4), (2,2), (1,1), bias=False)),
+            nn.utils.spectral_norm(nn.Conv2d(dim*2, dim*4, (4, 4), (2, 2), (1, 1), bias=False)),
             nn.InstanceNorm2d(dim*4, affine=True),
             nn.PReLU(dim*4),
-            nn.utils.spectral_norm(nn.Conv2d(dim*4, dim*8, (4,4), (2,2), (1,1), bias=False)),
+            nn.utils.spectral_norm(nn.Conv2d(dim*4, dim*8, (4, 4), (2, 2), (1, 1), bias=False)),
             nn.InstanceNorm2d(dim*8, affine=True),
             nn.PReLU(dim*8),
             nn.AdaptiveMaxPool2d(1),

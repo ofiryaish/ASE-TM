@@ -1,5 +1,5 @@
 import torch
-import torch.nn as nn
+
 
 def mag_phase_stft(y, n_fft, hop_size, win_size, compress_factor=1.0, center=True, addeps=False):
     """
@@ -12,25 +12,25 @@ def mag_phase_stft(y, n_fft, hop_size, win_size, compress_factor=1.0, center=Tru
         win_size (int): Window size.
         compress_factor (float, optional): Magnitude compression factor. Defaults to 1.0.
         center (bool, optional): Whether to center the signal before padding. Defaults to True.
-        eps (bool, optional): Whether adding epsilon to magnitude and phase or not. Defaults to False. 
+        eps (bool, optional): Whether adding epsilon to magnitude and phase or not. Defaults to False.
 
     Returns:
         tuple: Magnitude, phase, and complex representation of the STFT.
     """
-    #eps = torch.finfo(y.dtype).eps
+    # eps = torch.finfo(y.dtype).eps
     eps = 1e-10
     hann_window = torch.hann_window(win_size).to(y.device)
     stft_spec = torch.stft(
-                    y, n_fft, 
-                    hop_length=hop_size, 
-                    win_length=win_size, 
+                    y, n_fft,
+                    hop_length=hop_size,
+                    win_length=win_size,
                     window=hann_window,
-                    center=center, 
-                    pad_mode='reflect', 
-                    normalized=False, 
+                    center=center,
+                    pad_mode='reflect',
+                    normalized=False,
                     return_complex=True)
 
-    if addeps==False:
+    if not addeps:
         mag = torch.abs(stft_spec)
         pha = torch.angle(stft_spec)
     else:
@@ -64,10 +64,10 @@ def mag_phase_istft(mag, pha, n_fft, hop_size, win_size, compress_factor=1.0, ce
     com = torch.complex(mag * torch.cos(pha), mag * torch.sin(pha))
     hann_window = torch.hann_window(win_size).to(com.device)
     wav = torch.istft(
-                    com, 
-                    n_fft, 
-                    hop_length=hop_size, 
-                    win_length=win_size, 
-                    window=hann_window, 
+                    com,
+                    n_fft,
+                    hop_length=hop_size,
+                    win_length=win_size,
+                    window=hann_window,
                     center=center)
     return wav

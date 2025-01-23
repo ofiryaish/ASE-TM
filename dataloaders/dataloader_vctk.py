@@ -1,11 +1,14 @@
 import os
 import json
 import random
+
 import torch
 import torch.utils.data
 import librosa
-from models.stfts import mag_phase_stft, mag_phase_istft
+
+from models.stfts import mag_phase_stft
 from models.pcs400 import cal_pcs
+
 
 def list_files_in_directory(directory_path):
     files = []
@@ -15,17 +18,21 @@ def list_files_in_directory(directory_path):
                 files.append(os.path.join(root, filename))
     return files
 
+
 def load_json_file(file_path):
     with open(file_path, 'r') as json_file:
         data = json.load(json_file)
     return data
 
+
 def extract_identifier(file_path):
     return os.path.basename(file_path)
+
 
 def get_clean_path_for_noisy(noisy_file_path, clean_path_dict):
     identifier = extract_identifier(noisy_file_path)
     return clean_path_dict.get(identifier, None)
+
 
 class VCTKDemandDataset(torch.utils.data.Dataset):
     """
@@ -47,24 +54,23 @@ class VCTKDemandDataset(torch.utils.data.Dataset):
         pcs (bool, optional): Use PCS in training period. Defaults to False
     """
     def __init__(
-        self, 
-        clean_json, 
-        noisy_json, 
-        sampling_rate=16000, 
+        self,
+        clean_json,
+        noisy_json,
+        sampling_rate=16000,
         segment_size=32000,
-        n_fft=400, 
-        hop_size=100, 
-        win_size=400, 
-        compress_factor=1.0, 
-        split=True, 
-        n_cache_reuse=1, 
-        shuffle=True, 
-        device=None, 
+        n_fft=400,
+        hop_size=100,
+        win_size=400,
+        compress_factor=1.0,
+        split=True,
+        n_cache_reuse=1,
+        shuffle=True,
+        device=None,
         pcs=False
     ):
-
-        self.clean_wavs_path = load_json_file( clean_json )
-        self.noisy_wavs_path = load_json_file( noisy_json )
+        self.clean_wavs_path = load_json_file(clean_json)
+        self.noisy_wavs_path = load_json_file(noisy_json)
         random.seed(1234)
 
         if shuffle:
@@ -99,9 +105,9 @@ class VCTKDemandDataset(torch.utils.data.Dataset):
         if self._cache_ref_count == 0:
             noisy_path = self.noisy_wavs_path[index]
             clean_path = get_clean_path_for_noisy(noisy_path, self.clean_path_dict)
-            noisy_audio, _ = librosa.load( noisy_path, sr=self.sampling_rate)
-            clean_audio, _ = librosa.load( clean_path, sr=self.sampling_rate)
-            if self.pcs == True:
+            noisy_audio, _ = librosa.load(noisy_path, sr=self.sampling_rate)
+            clean_audio, _ = librosa.load(clean_path, sr=self.sampling_rate)
+            if self.pcs:
                 clean_audio = cal_pcs(clean_audio)
             self.cached_noisy_wav = noisy_audio
             self.cached_clean_wav = clean_audio
@@ -125,13 +131,21 @@ class VCTKDemandDataset(torch.utils.data.Dataset):
                 clean_audio = clean_audio[:, audio_start:audio_start + self.segment_size]
                 noisy_audio = noisy_audio[:, audio_start:audio_start + self.segment_size]
             else:
-                clean_audio = torch.nn.functional.pad(clean_audio, (0, self.segment_size - clean_audio.size(1)), 'constant')
-                noisy_audio = torch.nn.functional.pad(noisy_audio, (0, self.segment_size - noisy_audio.size(1)), 'constant')
+                clean_audio = torch.nn.functional.pad(
+                    clean_audio, (0, self.segment_size - clean_audio.size(1)), 'constant')
+                noisy_audio = torch.nn.functional.pad(
+                    noisy_audio, (0, self.segment_size - noisy_audio.size(1)), 'constant')
 
-        clean_mag, clean_pha, clean_com = mag_phase_stft(clean_audio, self.n_fft, self.hop_size, self.win_size, self.compress_factor)
-        noisy_mag, noisy_pha, noisy_com = mag_phase_stft(noisy_audio, self.n_fft, self.hop_size, self.win_size, self.compress_factor)
+        # # Process signals through primary path
+        # # TODO: check if I will have problem here since the simulator kernels are on the GPU
+        # t60 = randomize_reverberation_time(self.reverberation_times)
+        # clean_audio_pr = process_signals_through_primary_path(clean_audio, simulator=self.simulator, t60=t60)
+        # noisy_pr_audio = process_signals_through_primary_path(noisy_audio, simulator=self.simulator, t60=t60)
 
-        return (clean_audio.squeeze(), clean_mag.squeeze(), clean_pha.squeeze(), clean_com.squeeze(), noisy_mag.squeeze(), noisy_pha.squeeze())
+        noisy_mag, noisy_pha, noisy_com = mag_phase_stft(
+            noisy_audio, self.n_fft, self.hop_size, self.win_size, self.compress_factor)
+
+        return (clean_audio.squeeze(), noisy_audio.squeeze(), noisy_mag.squeeze(), noisy_pha.squeeze())
 
     def __len__(self):
         return len(self.noisy_wavs_path)

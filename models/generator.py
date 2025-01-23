@@ -1,26 +1,34 @@
 import torch
 import torch.nn as nn
 from einops import rearrange
-from .mamba_block import TFMambaBlock
+
 from .codec_module import DenseEncoder, MagDecoder, PhaseDecoder
+
 
 class SEMamba(nn.Module):
     """
     SEMamba model for speech enhancement using Mamba blocks.
-    
+
     This model uses a dense encoder, multiple Mamba blocks, and separate magnitude
     and phase decoders to process noisy magnitude and phase inputs.
     """
     def __init__(self, cfg):
         """
         Initialize the SEMamba model.
-        
+
         Args:
         - cfg: Configuration object containing model parameters.
         """
+        if cfg['model_cfg']['mamba_version'] == 1:
+            from .mamba_block import TFMambaBlock
+        elif cfg['model_cfg']['mamba_version'] == 2:
+            from .mamba2_block import TFMambaBlock
+        else:
+            raise ValueError("Invalid value for Mamba version")
         super(SEMamba, self).__init__()
         self.cfg = cfg
-        self.num_tscblocks = cfg['model_cfg']['num_tfmamba'] if cfg['model_cfg']['num_tfmamba'] is not None else 4  # default tfmamba: 4
+        self.num_tscblocks = \
+            cfg['model_cfg']['num_tfmamba'] if cfg['model_cfg']['num_tfmamba'] is not None else 4  # default tfmamba: 4
 
         # Initialize dense encoder
         self.dense_encoder = DenseEncoder(cfg)
@@ -35,11 +43,11 @@ class SEMamba(nn.Module):
     def forward(self, noisy_mag, noisy_pha):
         """
         Forward pass for the SEMamba model.
-        
+
         Args:
         - noisy_mag (torch.Tensor): Noisy magnitude input tensor [B, F, T].
         - noisy_pha (torch.Tensor): Noisy phase input tensor [B, F, T].
-        
+
         Returns:
         - denoised_mag (torch.Tensor): Denoised magnitude tensor [B, F, T].
         - denoised_pha (torch.Tensor): Denoised phase tensor [B, F, T].

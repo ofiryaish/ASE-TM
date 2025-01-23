@@ -1,8 +1,4 @@
-import os
-import torch
-import torchaudio
 import numpy as np
-import argparse
 import librosa
 import scipy
 
@@ -20,10 +16,10 @@ PCS400[190:202] = 1.077192982
 
 maxv = np.iinfo(np.int16).max
 
+
 def Sp_and_phase(signal):
     signal_length = signal.shape[0]
     n_fft = 400
-    hop_length = 100
     y_pad = librosa.util.fix_length(signal, size=signal_length + n_fft // 2)
 
     F = librosa.stft(y_pad, n_fft=400, hop_length=100, win_length=400, window=scipy.signal.windows.hamming(400))
@@ -44,6 +40,7 @@ def SP_to_wav(mag, phase, signal_length):
                            window=scipy.signal.windows.hamming(400),
                            length=signal_length)
     return result
+
 
 def cal_pcs(signal_wav):
     noisy_LP, Nphase, signal_length = Sp_and_phase(signal_wav.squeeze())

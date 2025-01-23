@@ -2,6 +2,7 @@ import os
 import json
 import argparse
 
+
 def list_files_in_directory(directory_path):
     # List all files in the directory
     files = []
@@ -11,9 +12,11 @@ def list_files_in_directory(directory_path):
                 files.append(os.path.join(root, filename))
     return files
 
+
 def save_files_to_json(files, output_file):
     with open(output_file, 'w') as json_file:
         json.dump(files, json_file, indent=4)
+
 
 def make_json(directory_path, output_file):
     # Get the list of files and save to JSON
@@ -24,25 +27,25 @@ def make_json(directory_path, output_file):
 
 
 def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument('--prefix_path', default='None')
+    # parser = argparse.ArgumentParser()
+    # parser.add_argument('--prefix_path', default='None')
 
-    args = parser.parse_args()
+    # args = parser.parse_args()
 
-    prefix = args.prefix_path if (args.prefix_path is not None) else "/mnt/e/Corpora/noisy_vctk/"
-
+    # prefix = args.prefix_path if (args.prefix_path is not None) else "VCTK_dataset/"
+    prefix = "data/VCTK_dataset/"
 
     ## You can manualy modify the clean and noisy path
     # ----------------------------------------------------------#
     ## train_clean
     make_json(
-        os.path.join(prefix, 'clean_trainset_28spk_wav_16k/'),
+        os.path.join(prefix, 'clean_trainset_28spk_wav/'),
         'data/train_clean.json'
     )
 
     ## train_noisy
     make_json(
-        os.path.join(prefix, 'noisy_trainset_28spk_wav_16k/'),
+        os.path.join(prefix, 'noisy_trainset_28spk_wav/'),
         'data/train_noisy.json'
     )
     # ----------------------------------------------------------#
@@ -51,13 +54,13 @@ def main():
     # create valid set json
     ## valid_clean
     make_json(
-         os.path.join(prefix, 'clean_testset_wav_16k/'),
+         os.path.join(prefix, 'clean_validationset_28spk_wav/'),
         'data/valid_clean.json'
     )
 
     ## valid_noisy
     make_json(
-        os.path.join(prefix, 'noisy_testset_wav_16k/'),
+        os.path.join(prefix, 'noisy_validationset_28spk_wav/'),
         'data/valid_noisy.json'
     )
     # ----------------------------------------------------------#
@@ -66,13 +69,13 @@ def main():
     # create testing set json
     ## test_clean
     make_json(
-       os.path.join(prefix, 'clean_testset_wav_16k/'),
+       os.path.join(prefix, 'clean_testset_wav/'),
         'data/test_clean.json'
     )
 
     ## test_noisy
     make_json(
-       os.path.join(prefix, 'noisy_testset_wav_16k/'),
+       os.path.join(prefix, 'noisy_testset_wav/'),
         'data/test_noisy.json'
     )
     # ----------------------------------------------------------#

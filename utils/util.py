@@ -5,10 +5,12 @@ import shutil
 import glob
 from torch.distributed import init_process_group
 
+
 def load_config(config_path):
     """Load configuration from a YAML file."""
     with open(config_path, 'r') as file:
         return yaml.safe_load(file)
+
 
 def initialize_seed(seed):
     """Initialize the random seed for both CPU and GPU."""
@@ -16,12 +18,14 @@ def initialize_seed(seed):
     if torch.cuda.is_available():
         torch.cuda.manual_seed(seed)
 
+
 def print_gpu_info(num_gpus, cfg):
     """Print information about available GPUs and batch size per GPU."""
     for i in range(num_gpus):
         gpu_name = torch.cuda.get_device_name(i)
         print(f"GPU {i}: {gpu_name}")
         print('Batch size per GPU:', int(cfg['training_cfg']['batch_size'] / num_gpus))
+
 
 def initialize_process_group(cfg, rank):
     """Initialize the process group for distributed training."""
@@ -32,6 +36,7 @@ def initialize_process_group(cfg, rank):
         rank=rank
     )
 
+
 def log_model_info(rank, model, exp_path):
     """Log model information and create necessary directories."""
     print(model)
@@ -41,17 +46,24 @@ def log_model_info(rank, model, exp_path):
     os.makedirs(os.path.join(exp_path, 'logs'), exist_ok=True)
     print("checkpoints directory :", exp_path)
 
+
 def load_ckpts(args, device):
     """Load checkpoints if available."""
     if os.path.isdir(args.exp_path):
         cp_g = scan_checkpoint(args.exp_path, 'g_')
         cp_do = scan_checkpoint(args.exp_path, 'do_')
-        if cp_g is None or cp_do is None:
+        if cp_g is None and cp_do is None:
             return None, None, 0, -1
-        state_dict_g = load_checkpoint(cp_g, device)
-        state_dict_do = load_checkpoint(cp_do, device)
-        return state_dict_g, state_dict_do, state_dict_do['steps'] + 1, state_dict_do['epoch']
+        state_dict_g = load_checkpoint(cp_g, device) if cp_g is not None else None
+        state_dict_do = load_checkpoint(cp_do, device) if cp_do is not None else None
+        if state_dict_do is not None:
+            return state_dict_g, state_dict_do, state_dict_do['steps'] + 1, state_dict_do['epoch']
+        elif state_dict_g is not None and 'steps' in state_dict_g and 'epoch' in state_dict_g:
+            return state_dict_g, state_dict_do, state_dict_g['steps'] + 1, state_dict_g['epoch']
+        else:
+            return state_dict_g, state_dict_do, 0, -1
     return None, None, 0, -1
+
 
 def load_checkpoint(filepath, device):
     assert os.path.isfile(filepath)
@@ -74,15 +86,21 @@ def scan_checkpoint(cp_dir, prefix):
         return None
     return sorted(cp_list)[-1]
 
+
 def build_env(config, config_name, exp_path):
     os.makedirs(exp_path, exist_ok=True)
     t_path = os.path.join(exp_path, config_name)
     if config != t_path:
         shutil.copyfile(config, t_path)
 
-def load_optimizer_states(optimizers, state_dict_do):
+
+def load_optimizer_states(optimizers, state_dict_do, state_dict_g):
     """Load optimizer states from checkpoint."""
+    # TODO: all the loading is messey because of the way they saved the checkpoints originally
     if state_dict_do is not None:
         optim_g, optim_d = optimizers
         optim_g.load_state_dict(state_dict_do['optim_g'])
         optim_d.load_state_dict(state_dict_do['optim_d'])
+    elif state_dict_g is not None and 'optim_g' in state_dict_g:
+        optim_g, optim_d = optimizers
+        optim_g.load_state_dict(state_dict_g['optim_g'])

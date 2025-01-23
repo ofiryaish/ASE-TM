@@ -5,9 +5,12 @@ import torch
 import torch.nn as nn
 from functools import partial
 
-from mamba_ssm.modules.mamba_simple import Mamba, Block
+# from mamba_ssm.modules.mamba2_simple import Mamba2Simple
+from mamba_ssm.modules.mamba2 import Mamba2
+from mamba_ssm.modules.block import Block
 from mamba_ssm.models.mixer_seq_simple import _init_weights
-from mamba_ssm.ops.triton.layernorm import RMSNorm
+from mamba_ssm.ops.triton.layer_norm import RMSNorm
+from mamba_ssm.modules.mlp import GatedMLP
 
 
 # github:
@@ -19,13 +22,19 @@ def create_block(
     expand = cfg['model_cfg']['expand']  # 4
     norm_epsilon = cfg['model_cfg']['norm_epsilon']  # 0.00001
 
-    mixer_cls = partial(Mamba, layer_idx=layer_idx, d_state=d_state, d_conv=d_conv, expand=expand)
-    norm_cls = partial(
-        nn.LayerNorm if not rms_norm else RMSNorm, eps=norm_epsilon
-    )
+    mixer_cls = partial(Mamba2, layer_idx=layer_idx, d_state=d_state, d_conv=d_conv, expand=expand)
+    norm_cls = partial(nn.LayerNorm if not rms_norm else RMSNorm, eps=norm_epsilon)
+
+    d_intermediate = 0  # TODO: Check what is this and change it accordingly
+    if d_intermediate == 0:
+        mlp_cls = nn.Identity
+    else:
+        mlp_cls = partial(GatedMLP, hidden_features=d_intermediate, out_features=d_model)
+
     block = Block(
             d_model,
             mixer_cls,
+            mlp_cls,
             norm_cls=norm_cls,
             fused_add_norm=fused_add_norm,
             residual_in_fp32=residual_in_fp32,
