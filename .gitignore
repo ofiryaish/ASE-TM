@@ -2,10 +2,23 @@
 __pycache__
 /exp
 /logs
-/data/*
-/mamba_install
+/data/sim_rir_16k/
+/data/VCTK_dataset/
+/data/sim_rir_16k.zip
+/data/train_clean_56spk.json
+/data/train_noisy_56spk.json
+/data/train_clean_comb.json
+/data/train_noisy_comb.json
+/mamba_install/
+/outputs/
+/analysis/
+/ablation_study/
+/scripts/
+/recipes_all/
+/sbatches/
 
 *.sbatch
 *.out
 data.zip
 
+.gitignore

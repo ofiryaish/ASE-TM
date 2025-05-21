@@ -6,4 +6,3 @@ pip install pyroomacoustics
 
 
 tensorboard --logdir=data/model --port=8080
-nohup python train.py &> train.log &

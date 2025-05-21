@@ -53,16 +53,16 @@ def load_ckpts(args, device):
         cp_g = scan_checkpoint(args.exp_path, 'g_')
         cp_do = scan_checkpoint(args.exp_path, 'do_')
         if cp_g is None and cp_do is None:
-            return None, None, 0, -1
+            return None, None, 0, -1, cp_g, cp_do
         state_dict_g = load_checkpoint(cp_g, device) if cp_g is not None else None
         state_dict_do = load_checkpoint(cp_do, device) if cp_do is not None else None
         if state_dict_do is not None:
-            return state_dict_g, state_dict_do, state_dict_do['steps'] + 1, state_dict_do['epoch']
+            return state_dict_g, state_dict_do, state_dict_do['steps'] + 1, state_dict_do['epoch'], cp_g, cp_do
         elif state_dict_g is not None and 'steps' in state_dict_g and 'epoch' in state_dict_g:
-            return state_dict_g, state_dict_do, state_dict_g['steps'] + 1, state_dict_g['epoch']
+            return state_dict_g, state_dict_do, state_dict_g['steps'] + 1, state_dict_g['epoch'], cp_g, cp_do
         else:
             return state_dict_g, state_dict_do, 0, -1
-    return None, None, 0, -1
+    return None, None, 0, -1, None, None
 
 
 def load_checkpoint(filepath, device):

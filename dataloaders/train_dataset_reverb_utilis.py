@@ -1,26 +1,41 @@
-from dataloaders.dataloader_vctk import VCTKDemandDataset
+import json
+import random
+
+from dataloaders.dataloader_vctk_reverb import VCTKDemandReverbDataset
 from torch.utils.data import DistributedSampler, DataLoader
+from models.simulate_paths import PreGeneratedSimulator
 
 
-def create_dataset(cfg, train=True, split=True, test=False, normalize=True):
+def create_dataset(cfg, train=True, split=True, test=False, const_rirs=False):
     """Create dataset based on configuration."""
     if train and test:
         raise ValueError("train and test cannot be True at the same time.")
     if test:
         clean_json = cfg['data_cfg']['test_clean_json']
-        noisy_json = cfg['data_cfg']['test_noisy_json']
     else:
         clean_json = cfg['data_cfg']['train_clean_json'] if train else cfg['data_cfg']['valid_clean_json']
-        noisy_json = cfg['data_cfg']['train_noisy_json'] if train else cfg['data_cfg']['valid_noisy_json']
     shuffle = (cfg['env_setting']['num_gpus'] <= 1) if train else False
     pcs = cfg['training_cfg']['use_PCS400'] if train else False
-    try:
-        predict_future = cfg['training_cfg']['predict_future']
-    except KeyError:
-        predict_future = 0
-    return VCTKDemandDataset(
+
+    simulator = PreGeneratedSimulator(
+        sr=cfg['stft_cfg']['sampling_rate'], rir_files_path=cfg['rir_cfg']['rir_files_path'],
+        rir_samples=-1, device="cpu", v=cfg['rir_cfg']['version'])
+
+    if const_rirs:
+        with open(clean_json) as f:
+            data = json.load(f)
+            n_rirs = len(data)
+        seed = 1234
+        random.seed(seed)
+        const_rirs_files = random.sample(simulator.rir_files, n_rirs)
+        print("The hash of the selected RIRs is: ", end="")
+        print(hash(tuple(const_rirs_files)))
+    else:
+        const_rirs_files = None
+
+    return VCTKDemandReverbDataset(
         clean_json=clean_json,
-        noisy_json=noisy_json,
+        simulator=simulator,
         sampling_rate=cfg['stft_cfg']['sampling_rate'],
         segment_size=cfg['training_cfg']['segment_size'],
         n_fft=cfg['stft_cfg']['n_fft'],
@@ -31,9 +46,8 @@ def create_dataset(cfg, train=True, split=True, test=False, normalize=True):
         n_cache_reuse=0,
         shuffle=shuffle,
         pcs=pcs,
-        predict_future=predict_future,
-        normalize=normalize,
-        test=test
+        normalize=cfg['training_cfg']['data_normalization'],
+        const_rirs_files=const_rirs_files
     )
 
 

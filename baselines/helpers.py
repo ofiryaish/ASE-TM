@@ -18,7 +18,8 @@ def load_model(optimizer, scheduler, cp_file_path):
     data = torch.load(cp_file_path)
 
     model_state_dict = data['model_state_dict']
-    optimizer.load_state_dict(data['optimizer_state_dict'])
+    if optimizer is not None:
+        optimizer.load_state_dict(data['optimizer_state_dict'])
 
     if scheduler is not None:
         scheduler.load_state_dict(data['scheduler_state_dict'])

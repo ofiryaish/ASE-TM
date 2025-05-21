@@ -113,6 +113,65 @@ class DenseEncoder(nn.Module):
         return x
 
 
+class HyperDenseEncoder(DenseEncoder):
+    """
+    DenseEncoder module consisting of initial convolution, dense block, and a final convolution
+    that its weights are larnable like in hypernetworks.
+    """
+    def __init__(self, cfg):
+        super(HyperDenseEncoder, self).__init__(cfg)
+        self.hyper_net = nn.Sequential(
+            nn.Linear(self.hid_feature, self.hid_feature * 4),
+            nn.ReLU(),
+            nn.Linear(self.hid_feature * 4, self.hid_feature * self.hid_feature * 1 * 3)
+        )
+
+        self.adaptive_pool = nn.AdaptiveAvgPool2d((1, 1))
+
+        self.dense_conv_2 = nn.Sequential(
+            nn.InstanceNorm2d(self.hid_feature, affine=True),
+            nn.PReLU(self.hid_feature)
+        )
+
+    def forward(self, x):
+        """
+        Forward pass for the HyperDenseEncoder module.
+
+        Args:
+        - x (torch.Tensor): Input tensor.
+
+        Returns:
+        - torch.Tensor: Encoded tensor.
+        """
+        x = self.dense_conv_1(x)  # [batch, hid_feature, time, freq]
+        x = self.dense_block(x)   # [batch, hid_feature, time, freq]
+
+        # Generate weights for the convolution
+        batch_size = x.size(0)
+        pooled_x = self.adaptive_pool(x)  # [batch, hid_feature, 1, 1]
+        pooled_x = pooled_x.view(batch_size, -1)  # [batch, hid_feature]
+        generated_weights = self.hyper_net(pooled_x)
+        generated_weights = generated_weights.view(batch_size, self.hid_feature, self.hid_feature, 1, 3)
+        # Process each sample in the batch separately
+        output = []
+        for i in range(batch_size):
+            # TODO: Check if this is the correct way to apply convolution with different weights for each sample
+            # https://discuss.pytorch.org/t/how-to-run-functional-conv2d-with-different-weights-for-each-sample-in-batch/136364/2
+
+            # Use the generated weights for convolution
+            sample = x[i:i+1]  # Keep batch dimension: [1, hid_feature, time, freq]
+            weights = generated_weights[i]  # [hid_feature, hid_feature, 1, 3]
+
+            # Apply convolution with the generated weights
+            conv_out = nn.functional.conv2d(sample, weights, stride=(1, 2))
+            output.append(conv_out)
+        x = torch.cat(output, dim=0)  # Stack the results back into a batch
+
+        x = self.dense_conv_2(x)  # [batch, hid_feature, time, freq//2]
+
+        return x
+
+
 class MagDecoder(nn.Module):
     """
     MagDecoder module for decoding magnitude information.

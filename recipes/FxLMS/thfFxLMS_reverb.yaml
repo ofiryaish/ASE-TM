@@ -2,16 +2,13 @@
 # These settings specify the hardware and distributed setup for the model training.
 # Adjust `num_gpus` and `dist_config` according to your distributed training environment.
 env_setting:
-  num_workers: 4  # Number of worker threads for data loading.
-  num_gpus: 1  # Number of GPUs. Now we don't support CPU mode.
+  num_gpus: 1  # Number of GPUs. Now we don't support CPU mode. 
+  num_workers: 8  # Number of worker threads for data loading.
   seed: 1234  # Seed for random number generators to ensure reproducibility.
+  stdout_interval: 10
 
 # Datapath Configuratoin
 data_cfg:
-  train_clean_json: data/train_clean.json
-  train_noisy_json: data/train_noisy.json
-  valid_clean_json: data/valid_clean.json
-  valid_noisy_json: data/valid_noisy.json
   test_clean_json: data/test_clean.json
   test_noisy_json: data/test_noisy.json
 
@@ -19,18 +16,12 @@ data_cfg:
 # This section details parameters that directly influence the training process,
 # including batch sizes, learning rates, and optimizer specifics.
 training_cfg:
-  training_epochs: 300 # Training epoch.
-  batch_size: 8  # Training batch size.
-  learning_rate: 0.0001  # Initial learning rate.
-  clip: 0.25 # Gradient clipping threshold. -1 for no clipping.
-  dropouth: 0.05 # Dropouth rate for rnn layers (0 = no dropout).
-  wdecay: 0 # Weight decay applied to all weights. 1.2e-6 TEST 
+  batch_size: 4  # Training batch size.
   segment_size: 32000  # Audio segment size used during training, dependent on sampling rate.
   use_PCS400: False  # Use PCS or not
 
 # STFT Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.
-# This in not used in the training process, but is required for the model loading since We are using the same dataloader for all models
 stft_cfg:
   sampling_rate: 16000  # Audio sampling rate in Hz.
   n_fft: 400  # FFT components for transforming audio signals.
@@ -38,18 +29,17 @@ stft_cfg:
   win_size: 400  # Window size used in FFT.
 
 # Model Configuration
-# Defines the architecture specifics of the model, including layer configurations and feature compression.
 model_cfg:
-  model_type: ARN
-  nlayers: 4  # Number of layers in the model.
-  compress_factor: 1  # Compression factor applied to extracted features.
+  thf: True  # Model type
+  compress_factor: 1
 
 # Room Impulse Response Generator Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.
 rir_cfg:
+  rir_files_path: data/sim_rir_16k
   type: RIR # Type of simulation, "RIR" for Room Impulse Response. "PyRoom" for Pyroomacoustics simulation.
   sampling_rate: 16000  # Audio sampling rate in Hz.
   reverberation_times: [0.15, 0.175, 0.2, 0.225, 0.25]  # reverberation times to simulate.
   rir_samples: 512
   hp_filter: True  # high-pass filter.
-  version: 3  # simulation version.
+  version: 5  # simulation version.

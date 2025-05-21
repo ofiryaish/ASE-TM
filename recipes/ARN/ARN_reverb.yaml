@@ -27,6 +27,7 @@ training_cfg:
   wdecay: 0 # Weight decay applied to all weights. 1.2e-6 TEST 
   segment_size: 32000  # Audio segment size used during training, dependent on sampling rate.
   use_PCS400: False  # Use PCS or not
+  data_normalization: True  # Normalize the input data or not
 
 # STFT Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.
@@ -47,9 +48,10 @@ model_cfg:
 # Room Impulse Response Generator Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.
 rir_cfg:
+  rir_files_path: data/sim_rir_16k
   type: RIR # Type of simulation, "RIR" for Room Impulse Response. "PyRoom" for Pyroomacoustics simulation.
   sampling_rate: 16000  # Audio sampling rate in Hz.
   reverberation_times: [0.15, 0.175, 0.2, 0.225, 0.25]  # reverberation times to simulate.
   rir_samples: 512
   hp_filter: True  # high-pass filter.
-  version: 3  # simulation version.
+  version: 5  # simulation version.

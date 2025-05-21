@@ -1,3 +1,4 @@
+import os
 import random
 import numpy as np
 import torch
@@ -5,6 +6,9 @@ import torchaudio
 
 import rir_generator
 import pyroomacoustics as pra
+
+from models.reverberate import reverberate
+
 
 PRIMARY_PATH = 1
 SECONDARY_PATH = 2
@@ -89,6 +93,8 @@ class RIRGenSimulator:
             return torchaudio.transforms.FFTConvolve(mode="same")(signal_batch, rir.squeeze(0))
         elif self.v == 4:
             return torchaudio.transforms.Convolve(mode="same")(signal_batch, rir)
+        elif self.v == 5:
+            return reverberate(signal_batch, rir.squeeze(0))
         else:
             raise ValueError("Does not support this version.")
 
@@ -144,6 +150,62 @@ class PyRoomSimulator:
             return torchaudio.transforms.FFTConvolve(mode="same")(signal_batch, rir)
         elif self.v == 4:
             return torchaudio.transforms.Convolve(mode="same")(signal_batch, rir)
+        elif self.v == 5:
+            return reverberate(signal_batch, rir.squeeze(0))
+        else:
+            raise ValueError("Does not support this version.")
+
+
+class PreGeneratedSimulator:
+    def __init__(
+            self, sr, device, rir_files_path, rir_samples=-1, v=3):
+        self.sr = sr
+        self.device = device
+        self.rir_length = rir_samples
+        self.v = v
+        self.base_path = rir_files_path
+        self.rir_files = self.get_all_wav_files()
+
+    def get_all_wav_files(self):
+        # Recursively find all .wav files under self.base_path
+        return [os.path.join(root, file)
+                for root, _, files in os.walk(self.base_path)
+                for file in files if file.endswith('.wav')]
+
+    def load_rir(self, rir_file):
+        rir, sr = torchaudio.load(rir_file)
+
+        if sr != self.sr:
+            resampler = torchaudio.transforms.Resample(sr, self.sr)
+            rir = resampler(rir)
+
+        if self.rir_length > 0:
+            rir = rir[:, :self.rir_length]
+
+        rir = rir.to(self.device).view(1, 1, -1).float()
+        return rir
+
+    def sample_rir(self):
+        rir_file = random.choice(self.rir_files)
+        # print(f"Loading RIR from {rir_file}")
+        rir = self.load_rir(rir_file)
+        return rir
+
+    def simulate(self, signal_batch, padding="same", rir_file=None):
+        if rir_file is None:
+            rir = self.sample_rir()
+        else:
+            rir = self.load_rir(rir_file)
+        if self.v == 1:
+            return _simulate(signal_batch, rir, self.device, padding)
+        elif self.v == 2:
+            return _simulate_v2(signal_batch, rir, self.device, padding)
+        elif self.v == 3:
+            return torchaudio.transforms.FFTConvolve(mode="same")(signal_batch, rir.squeeze(0))
+        elif self.v == 4:
+            return torchaudio.transforms.Convolve(mode="same")(signal_batch, rir)
+        elif self.v == 5:
+            return reverberate(signal_batch, rir.squeeze(0))
         else:
             raise ValueError("Does not support this version.")
 

@@ -19,7 +19,7 @@ data_cfg:
 # This section details parameters that directly influence the training process,
 # including batch sizes, learning rates, and optimizer specifics.
 training_cfg:
-  training_epochs: 120 # Training epoch.
+  training_epochs: 300 # Training epoch.
   batch_size: 32  # Training batch size.
   learning_rate: 0.0005  # Initial learning rate.
   decay_period: 10  # Learning rate decay period.
@@ -41,7 +41,11 @@ stft_cfg:
 # Model Configuration
 # Defines the architecture specifics of the model, including layer configurations and feature compression.
 model_cfg:
+  model_type: DeepANC
   compress_factor: 1  # Compression factor applied to extracted features.
+  win_size: 0.020  # Window size for the model.
+  hop_size: 0.010  # Hop size for the model.
+  sample_rate: 16000  # Audio sampling rate in Hz for the model
 
 # Room Impulse Response Generator Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.

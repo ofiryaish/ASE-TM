@@ -20,13 +20,17 @@ data_cfg:
 # including batch sizes, learning rates, and optimizer specifics.
 training_cfg:
   training_epochs: 300 # Training epoch.
-  batch_size: 8  # Training batch size.
-  learning_rate: 0.0001  # Initial learning rate.
-  clip: 0.25 # Gradient clipping threshold. -1 for no clipping.
-  dropouth: 0.05 # Dropouth rate for rnn layers (0 = no dropout).
-  wdecay: 0 # Weight decay applied to all weights. 1.2e-6 TEST 
+  batch_size: 32  # Training batch size.
+  learning_rate: 0.0005  # Initial learning rate.
+  decay_period: 10  # Learning rate decay period.
+  decay_factor: 0.7 # Learning rate decay factor.
+  norm: False  # Whether to normalize the input features.
+  clip: -1 # Gradient clipping threshold. -1 for no clipping.
   segment_size: 32000  # Audio segment size used during training, dependent on sampling rate.
   use_PCS400: False  # Use PCS or not
+  data_normalization: True  # Normalize the input data or not
+  min_clip_value: 0.1 # Minimum value for clipping the data.
+  max_clip_value: 0.5 # Maximum value for clipping the data.
 
 # STFT Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.
@@ -40,9 +44,11 @@ stft_cfg:
 # Model Configuration
 # Defines the architecture specifics of the model, including layer configurations and feature compression.
 model_cfg:
-  model_type: ARN
-  nlayers: 4  # Number of layers in the model.
+  model_type: DeepANC
   compress_factor: 1  # Compression factor applied to extracted features.
+  win_size: 0.020  # Window size for the model.
+  hop_size: 0.010  # Hop size for the model.
+  sample_rate: 16000  # Audio sampling rate in Hz for the model
 
 # Room Impulse Response Generator Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.

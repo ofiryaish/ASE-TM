@@ -1,154 +1,93 @@
-# SEMamba (Accepted to IEEE SLT 2024)
-This is the official implementation of the SEMamba paper.  
-For more details, please refer to: [An Investigation of Incorporating Mamba for Speech Enhancement](https://arxiv.org/abs/2405.06573)
+# ASE-TM (Active Speech Enhancement Transformer-Mamba model)
+
+This repository contains the implementation of the ASE-TM model.
+
+In this work, we introduce a new paradigm for active sound modification: Active Speech Enhancement (ASE). Active Noise Cancellation (ANC) algorithms focus on suppressing external interference, while ASE goes further by actively shaping the speech signal—both attenuating unwanted noise components and amplifying speech-relevant frequencies—to improve intelligibility and perceptual quality. To enable this, we propose a novel Transformer-Mamba-based architecture, along with a task-specific loss function designed to jointly optimize interference suppression and signal enrichment. Our method supoorts multiple speech processing tasks—including denoising, dereverberation, and declipping.
 
 ---
 
-### NeurIPS 2024 competition : URGENT challenge 2024 ( oral presentation )
+## Requirements
 
-- A speech enhancement (SE) challenge aiming to build universal, robust, diverse, and generalizable SE models.
-- The challenge involves diverse distortions, including 
-    - **additive noise**, 
-    - **reverberation**, 
-    - **clipping**,
-    - **bandwidth limitations**,  
+We used the following package versions (other versions may work as well):
 
-    with **all types of sampling frequencies** supported by a single model.
-- Requires handling a large-scale dataset (~1.5 TB) and includes ranking based on **13 metrics** in classes of 
-    - non-intrusive, 
-    - intrusive, 
-    - downstream-task-independent, 
-    - downstream-task-dependent,
-    - subjective  
+- Python == 3.10  
+- CUDA >= 12.0  
+- PyTorch == 2.5.1
+- TensorBoard==2.18.0
+- mamba-ssm==2.2.4
+- rir-generator==0.2.0
+- pyroomacoustics==0.8.3
+- pesq==0.0.4
 
-    SE metrics.
-- Achieved **4th place** among 70 participating teams (>20 teams joined to the final stage).
-- Deliver an oral presentation at the **NeurIPS** 2024 workshop, Vancouver, Canada.
-- **Demo website** **[Live Demo Website](https://roychao19477.github.io/speech-enhancement-demo-2024/)**
 
----
+## Model Architecture
 
-⚠️  Notice: If you encounter CUDA-related issues while using the Mamba-1 framework, we suggest using the Mamba-2 framework (available in the mamba-2 branch).  
-The Mamba-2 framework is designed to support both Mamba-1 and Mamba-2 model structures.
-
-```bash
-git checkout mamba-2
-```
-
-## Requirement
-    * Python >= 3.9
-    * CUDA >= 12.0
-    * PyTorch == 2.2.2
-
-## Model
-
-![SEMamba advanced model](imgs/SEMamba_advanced.jpg)
-
-## Speech Enhancement Results
-VCTK-Demand
-![VCTKDEMAND_Results](imgs/VCTK-Demand.png)
-
-## ASR Word Error Rate
-We have tested the ASR results using OpenAI Whisper on the test set of VoiceBank-DEMAND.
-> The evaluation code will be released in the future.
-
-![VCTKDEMAND WER Results](imgs/vctk_wer.jpg)
+![ASE-TM model](imgs/ase_mamba_arch.jpg)
 
 ## Additional Notes
 
-1. Ensure that both the `nvidia-smi` and `nvcc -V` commands show CUDA version 12.0 or higher to verify proper installation and compatibility.
+1. Ensure that both `nvidia-smi` and `nvcc -V` show CUDA version 12.0 or higher to confirm compatibility.
 
-2. Currently, it supports only GPUs from the RTX series and newer models. Older GPU models, such as GTX 1080 Ti or Tesla V100, may not support the execution due to hardware limitations.
+2. Currently, only RTX series GPUs and newer are supported. Older GPUs (e.g., GTX 1080 Ti, Tesla V100) may not be compatible due to hardware limitations.  
+   We used an NVIDIA RTX A6000 with 48 GB of memory.
+
+3. The codebase includes several model architectures that we tested during development. Our final ASE-TM architecture is implemented as `SEMambaCoDe2dReAt`, and its corresponding configuration file is the one with the suffix `_v44`.
 
 ## Installation
-### (Suggested:) Step 0 - Create a Python environment with Conda
 
-It is highly recommended to create a separate Python environment to manage dependencies and avoid conflicts.
+### (Recommended) Step 0 – Create a Python environment with Conda
+
+To avoid conflicts, it's highly recommended to use a separate environment:
+
 ```bash
-conda create --name mamba python=3.9
+conda create --name mamba python=3.10
 conda activate mamba
 ```
 
-### Step 1 - Install PyTorch
+### Step 1 – Install PyTorch
 
-Install PyTorch 2.2.2 from the official website. Visit [PyTorch Previous Versions](https://pytorch.org/get-started/previous-versions/) for specific installation commands based on your system configuration (OS, CUDA version, etc.).
+Install PyTorch 2.5.1. It's best to follow the instructions on the [official PyTorch website](https://pytorch.org/get-started/previous-versions/) based on your system (OS, CUDA version, etc.).
 
-### Step 2 - Install Required Packages
+### Step 2 – Install Required Packages
 
-After setting up the environment and installing PyTorch, install the required Python packages listed in requirements.txt.
+Once the environment is set up and PyTorch is installed, install the required dependencies:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-### Step 3 - Install the Mamba Package
-
-Navigate to the mamba_install directory and install the package. This step ensures all necessary components are correctly installed.
-
-```bash
-cd mamba_install
-pip install .
-```
-
-⚠️  Note: Installing from source (provided `mamba_install`) can help prevent package issues and ensure compatibility between different dependencies. It is recommended to follow these steps carefully to avoid potential conflicts.
-
-⚠️  Notice: If you encounter CUDA-related issues while you already have `CUDA>=12.0` and installed `pytorch 2.2.2`, you could try mamba 1.2.0.post1 instead of mamba 1.2.0 as follow:
-```bash
-cd mamba-1_2_0_post1
-pip install .
-```
-
-
 ## Training the Model
-### Step 1: Prepare Dataset JSON
 
-Create the dataset JSON file using the script `sh make_dataset.sh`. You may need to modify `make_dataset.sh` and `data/make_dataset_json.py`.
+### Step 1 – Prepare the Dataset
 
-Alternatively, you can directly modify the data paths in `data/train_clean.json`, `data/train_noisy.json`, etc.
+Follow the instructions in `data/README.md` to prepare the datasets and generate RIR files for training.
 
-### Step 2: Run the following script to train the model.
+### Step 2 – Configure the Model
 
+Choose or customize a model configuration file depending on your task. See details in `recipes/README.md`.
+
+### Step 3 – Run the Training Script
+
+Refer to `train_and_infrence_scripts/README.md` for instructions. The training scripts support command-line arguments.
+
+**Tip:** Use TensorBoard to monitor training progress:
 ```bash
-sh run.sh
+tensorboard --logdir exp/path_to_your_exp/logs
 ```
 
-Note: You can use `tensorboard --logdir exp/path_to_your_exp/logs` to check your training log
+## Inference
 
-## Using the Pretrained Model
-
-Modify the `--input_folder` and `--output_folder` parameters in `pretrained.sh` to point to your desired input and output directories. Then, run the script.
-
-```bash
-sh pretrained.sh
-```
-
-## Implementing the PCS Method in SEMamba
-There are two methods to implement the PCS (Perceptual Contrast Stretching) method in SEMamba:
-1. Use PCS as Training Target:
-- Run the `sh runPCS.sh` with the yaml configuration `use_PCS400=True`.
-- Use the pretrained model `sh pretrained.sh` without post-processing `--post_processing_PCS False`.
-
-2. Use PCS as Post-Processing:
-- Run the `sh run.sh` with the yaml configuration `use_PCS400=False`.
-- Use the pretrained model `sh pretrained.sh` with post-processing `--post_processing_PCS True`.
+Follow the instructions in `train_and_infrence_scripts/README.md` and use the appropriate inference script.  
+Ensure that your configuration file includes the path to the test dataset JSON.  
+The inference scripts also support command-line arguments.
 
 ## Evaluation
-The evaluation metrics is calculated via: [CMGAN](https://github.com/ruizhecao96/CMGAN/blob/main/src/tools/compute_metrics.py)  
-> The evaluation code will be released in the future.
 
-## Perceptual Contrast Stretching
-The implementation of Perceptual Contrast Stretching (PCS) as discussed in our paper can be found at [PCS400](https://github.com/RoyChao19477/PCS/tree/main/PCS400).
+Evaluation metrics are computed using the script:
+```bash
+utils/compute_metrics.py
+```
 
 ## References and Acknowledgements
-We would like to express our gratitude to the authors of [MP-SENet](https://github.com/yxlu-0102/MP-SENet/tree/main), [CMGAN](https://github.com/ruizhecao96/CMGAN), [HiFi-GAN](https://github.com/jik876/hifi-gan/blob/master/train.py), and [NSPP](https://github.com/YangAi520/NSPP).
 
-## Citation:
-If you find the paper useful in your research, please cite:  
-```
-@article{chao2024investigation,
-  title={An Investigation of Incorporating Mamba for Speech Enhancement},
-  author={Chao, Rong and Cheng, Wen-Huang and La Quatra, Moreno and Siniscalchi, Sabato Marco and Yang, Chao-Han Huck and Fu, Szu-Wei and Tsao, Yu},
-  journal={arXiv preprint arXiv:2405.06573},
-  year={2024}
-}
-```
+We thank the authors of [SEMamba](https://github.com/RoyChao19477/SEMamba) for their contributions.

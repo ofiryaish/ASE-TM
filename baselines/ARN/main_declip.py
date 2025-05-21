@@ -6,7 +6,7 @@ import torch
 
 from torch.utils.tensorboard import SummaryWriter
 
-from dataloaders.train_dataset_utilis import create_dataloader, create_dataset
+from dataloaders.train_dataset_clip_utilis import create_dataloader, create_dataset
 from models.simulate_paths import (instance_simulator, process_signals_through_primary_path,
                                    process_signals_through_secondary_path, randomize_reverberation_time)
 from utils.util import load_config
@@ -43,14 +43,15 @@ def valid(model, validation_data, reverberation_times, simulator, sef_factor,
     with torch.no_grad():
         for batch in validation_data:
             # get the inputs and load to device
-            clean_audio, noisy_audio, _noisy_mag, _noisy_pha = batch
+            clean_audio, _clean_mag, _clean_pha, _clean_com, \
+                noisy_audio, _noisy_mag, _noisy_pha = batch  # [B, 1, F, T], F = nfft // 2+ 1, T = nframes
             clean_audio = clean_audio.to(device)
             noisy_audio = noisy_audio.to(device)
 
             # TODO: without t60 I can process the signals through the primary path beforehead
             t60 = randomize_reverberation_time(reverberation_times)
             # Process signals through primary path
-            clean_audio = process_signals_through_primary_path(clean_audio, simulator, t60)
+            # clean_audio = process_signals_through_primary_path(clean_audio, simulator, t60)
             audio_g = predict(noisy_audio, model, device)
             noisy_audio = process_signals_through_primary_path(noisy_audio, simulator, t60)
 
@@ -85,14 +86,16 @@ def train(model, validation_data, train_data, reverberation_times, simulator,
             optimizer.zero_grad()
 
             # get the inputs and load to device
-            clean_audio, noisy_audio, _noisy_mag, _noisy_pha = batch
+            clean_audio, _clean_mag, _clean_pha, _clean_com, \
+                noisy_audio, _noisy_mag, _noisy_pha = batch  # [B, 1, F, T], F = nfft // 2+ 1, T = nframes
+
             clean_audio = clean_audio.to(device)
             noisy_audio = noisy_audio.to(device)
 
             # TODO: without t60 I can process the signals through the primary path beforehead
             t60 = randomize_reverberation_time(reverberation_times)
             # Process signals through primary path
-            clean_audio = process_signals_through_primary_path(clean_audio, simulator, t60)
+            # clean_audio = process_signals_through_primary_path(clean_audio, simulator, t60)
             audio_g = predict(noisy_audio, model, device)
             noisy_audio = process_signals_through_primary_path(noisy_audio, simulator, t60)
 
@@ -126,7 +129,7 @@ def train(model, validation_data, train_data, reverberation_times, simulator,
         scheduler.step()
 
         # save model after each epoch
-        save_model(model, optimizer, scheduler, epoch, f"{save_folder_path}/g_{steps:08d}.pth")
+        # save_model(model, optimizer, scheduler, epoch, f"{save_folder_path}/g_{steps:08d}.pth")
 
         # validation after each epoch
         validation_total_loss = valid(
@@ -147,8 +150,8 @@ def train(model, validation_data, train_data, reverberation_times, simulator,
 def main():
     parser = argparse.ArgumentParser(description='ARN Model')
     parser.add_argument('--exp_folder', default='exp')
-    parser.add_argument('--exp_name', default='ARN_exp')
-    parser.add_argument('--config', default='recipes/ARN/ARN.yaml')
+    parser.add_argument('--exp_name', default='ARN_exp_clip')
+    parser.add_argument('--config', default='recipes/ARN/ARN_clip.yaml')
 
     args = parser.parse_args()
     args.exp_path = os.path.join(args.exp_folder, args.exp_name)
@@ -173,11 +176,11 @@ def main():
 
     # Datasets
     # Create trainset and train_loader
-    trainset = create_dataset(cfg, train=True, split=True, device=device)
+    trainset = create_dataset(cfg, train=True, split=True)
     train_loader = create_dataloader(trainset, cfg, train=True)
 
     # Create validset and validation_loader
-    validset = create_dataset(cfg, train=False, split=True, device=device)
+    validset = create_dataset(cfg, train=False, split=True)
     validation_loader = create_dataloader(validset, cfg, train=False)
 
     sw = SummaryWriter(os.path.join(args.exp_path, 'logs'))

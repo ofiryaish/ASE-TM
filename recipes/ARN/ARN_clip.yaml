@@ -27,6 +27,9 @@ training_cfg:
   wdecay: 0 # Weight decay applied to all weights. 1.2e-6 TEST 
   segment_size: 32000  # Audio segment size used during training, dependent on sampling rate.
   use_PCS400: False  # Use PCS or not
+  data_normalization: True  # Normalize the input data or not
+  min_clip_value: 0.1 # Minimum value for clipping the data.
+  max_clip_value: 0.5 # Maximum value for clipping the data.
 
 # STFT Configuration
 # Configuration for Short-Time Fourier Transform (STFT), crucial for audio processing models.

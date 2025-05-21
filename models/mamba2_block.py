@@ -7,6 +7,7 @@ from functools import partial
 
 # from mamba_ssm.modules.mamba2_simple import Mamba2Simple
 from mamba_ssm.modules.mamba2 import Mamba2
+from models.hypermamba import HyperMamba2
 from mamba_ssm.modules.block import Block
 from mamba_ssm.models.mixer_seq_simple import _init_weights
 from mamba_ssm.ops.triton.layer_norm import RMSNorm
@@ -22,7 +23,10 @@ def create_block(
     expand = cfg['model_cfg']['expand']  # 4
     norm_epsilon = cfg['model_cfg']['norm_epsilon']  # 0.00001
 
-    mixer_cls = partial(Mamba2, layer_idx=layer_idx, d_state=d_state, d_conv=d_conv, expand=expand)
+    if cfg['model_cfg']['model_type'] == "SEHyperMamba":
+        mixer_cls = partial(HyperMamba2, layer_idx=layer_idx, d_state=d_state, d_conv=d_conv, expand=expand)
+    else:
+        mixer_cls = partial(Mamba2, layer_idx=layer_idx, d_state=d_state, d_conv=d_conv, expand=expand)
     norm_cls = partial(nn.LayerNorm if not rms_norm else RMSNorm, eps=norm_epsilon)
 
     d_intermediate = 0  # TODO: Check what is this and change it accordingly
