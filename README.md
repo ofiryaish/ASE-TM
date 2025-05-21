@@ -22,7 +22,7 @@ We used the following package versions (other versions may work as well):
 
 ## Model Architecture
 
-![ASE-TM model](imgs/ase_mamba_arch.jpg)
+![ASE-TM model](imgs/ase_mamba_arch.png)
 
 ## Additional Notes
 
