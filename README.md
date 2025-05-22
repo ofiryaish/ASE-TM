@@ -17,7 +17,7 @@ We used the following package versions (other versions may work as well):
 - mamba-ssm==2.2.4
 - rir-generator==0.2.0
 - pyroomacoustics==0.8.3
-- pesq==0.0.4
+- pesq==0.0.4 
 
 
 ## Model Architecture
