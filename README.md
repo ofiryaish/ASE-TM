@@ -2,7 +2,7 @@
 
 This repository contains the implementation of the ASE-TM model.
 
-In this work, we introduce a new paradigm for active sound modification: Active Speech Enhancement (ASE). Active Noise Cancellation (ANC) algorithms focus on suppressing external interference, while ASE goes further by actively shaping the speech signal—both attenuating unwanted noise components and amplifying speech-relevant frequencies—to improve intelligibility and perceptual quality. To enable this, we propose a novel Transformer-Mamba-based architecture, along with a task-specific loss function designed to jointly optimize interference suppression and signal enrichment. Our method supoorts multiple speech processing tasks—including denoising, dereverberation, and declipping.
+In this work, we introduce a new paradigm for active sound modification: Active Speech Enhancement (ASE). Active Noise Cancellation (ANC) algorithms focus on suppressing external interference, while ASE goes further by actively shaping the speech signal—both attenuating unwanted noise components and amplifying speech-relevant frequencies—to improve intelligibility and perceptual quality. To enable this, we propose a novel Transformer-Mamba-based architecture, along with a task-specific loss function designed to jointly optimize interference suppression and signal enrichment. Our method supports multiple speech processing tasks—including denoising, dereverberation, and declipping.
 
 ---
 
@@ -90,4 +90,4 @@ utils/compute_metrics.py
 
 ## References and Acknowledgements
 
-We thank the authors of [SEMamba](https://github.com/RoyChao19477/SEMamba) for their contributions.
+We thank the authors of [DeepASC](https://github.com/mishalydev/DeepASC) for their contributions to acoustic path simulation and for re-implementing baseline models.
