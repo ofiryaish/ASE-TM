@@ -1,8 +1,11 @@
 MIT License
 
-Copyright (c) 2024 RONG CHAO
+Copyright (c) 2024 OFIR YAISH
+Portions of this software are Copyright (c) 2024 RONG CHAO (Original SEMamba)
 Portions of this software are Copyright (c) 2023 YXLU-0102 (Original MP-SENet)
 Portions of this software are Copyright (c) 2022 Ruizhe Cao (Original CMGAN)
+Portions of this software are Copyright (c) SpeechBrain
+
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the “Software”), to deal
@@ -12,10 +15,10 @@ copies of the Software, and to permit persons to whom the Software is
 furnished to do so, subject to the following conditions:
 	1.	The above copyright notice, this permission notice, and the following
 acknowledgment shall be included in all copies or substantial portions of the Software:
-“This software is based on MP-SENet (https://github.com/yxlu-0102/MP-SENet)
-and CMGAN (https://github.com/ruizhecao96/CMGAN), which are licensed under the MIT license.”
+“This software is based on SEMamba (https://github.com/RoyChao19477/SEMamba), MP-SENet (https://github.com/yxlu-0102/MP-SENet)
+and CMGAN (https://github.com/ruizhecao96/CMGAN), which are licensed under the MIT license. In addition portions of this softwars is based on SpeechBrain (https://github.com/speechbrain/speechbrain) which is licensed under the Apache License, version 2.0”
 	2.	Redistributions in source code or binary form must retain the above copyright
-notice, this permission notice, and acknowledgment of MP-SENet and CMGAN’s contributions.
+notice, this permission notice, and acknowledgment of SEMamba, MP-SENet SpeechBrain, and CMGAN’s contributions.
 
 THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
 IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
